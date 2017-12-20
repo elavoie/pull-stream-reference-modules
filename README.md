@@ -1,2 +1,2 @@
 # pull-check
-References modules for checking the correctness of other modules.
+Reference modules for checking the correctness of other modules.
