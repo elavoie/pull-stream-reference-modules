@@ -1,0 +1,27 @@
+{
+  "name": "pull-stream-reference-modules",
+  "version": "1.0.0",
+  "description": "Reference modules for checking the correctness of other modules.",
+  "main": "src/index.js",
+  "directories": {
+    "test": "test"
+  },
+  "scripts": {
+    "test": "tape test/index.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/elavoie/pull-stream-reference-modules.git"
+  },
+  "author": "Erick Lavoie",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/elavoie/pull-stream-reference-modules/issues"
+  },
+  "homepage": "https://github.com/elavoie/pull-stream-reference-modules#readme",
+  "devDependencies": {
+    "pull-stream": "^3.6.1",
+    "pull-stream-protocol-reifier": "^2.0.2",
+    "tape": "^4.8.0"
+  }
+}

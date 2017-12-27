@@ -1,4 +1,4 @@
-function checkArgs (r, ti, ta, ea, ts) {
+function checkArgs (r, ti, ta, ea, ts, tc) {
   if (typeof r !== 'number') {
     throw new Error("Invalid parameter 'r' of type '" + (typeof r) + "', expected a number instead")
   }
@@ -26,27 +26,37 @@ function checkArgs (r, ti, ta, ea, ts) {
   if (typeof ts !== 'boolean') {
     throw new Error("Invalid parameter 'ts' of type '" + (typeof ts) + "', expected a boolean value instead")
   }
+
+  if (typeof ts !== 'boolean') {
+    throw new Error("Invalid parameter 'tc' of type '" + (typeof tc) + "', expected a boolean value instead")
+  }
 }
 
-module.exports = function (r, ti, ta, ea, ts) {
-  checkArgs(r, ti, ta, ea, ts)
-  var n = 1
-  var terminated = false
-  var abort = ta ? true : new Error("ReferenceSink: Generated Error (ta === false)")
+module.exports = function (r, ti, ta, ea, ts, tc) {
+  checkArgs(r, ti, ta, ea, ts, tc)
+  var abort = ta ? true : new Error('ReferenceSink: Generated Error')
 
   return function sink (request) {
     function ask (i, terminate) {
       function doRequest () {
-          if (ts || i < ti - 1) {
-            request(false, x)
-          } else if (i === ti - 1) {
-            request(false, function () { })
-            setImmediate(function () {terminate(abort, ++i)})
-          } else if (i >= ti) {
-            terminate(abort, i)
+        if (i < ti - 1) {
+          request(false, x)
+        } else if (ts && i < ti) {
+          request(false, x)
+        } else if (i === ti - 1) {
+          var done = false
+          request(false, function (_done) {
+            done = _done
+          })
+          if (tc || !done) {
+            terminate(abort, ++i)
           }
+        } else if (i >= ti) {
+          terminate(abort, i)
+        }
       }
       function x (done, v) {
+        if (done && !tc) return
         ++i
         doRequest()
       }
@@ -54,29 +64,29 @@ module.exports = function (r, ti, ta, ea, ts) {
       doRequest()
     }
 
-    function terminate(abort, i) {
+    function terminate (abort, i) {
       if (ea) {
-        terminateX(abort,i)
+        terminateX(abort, i)
       } else {
-        terminateNoX(abort,i)
+        terminateNoX(abort, i)
       }
     }
 
     function terminateX (abort, i) {
       function x (done) {
-        setImmediate(function () { terminateX(abort, i+1) })
+        terminateX(abort, i + 1)
       }
 
       if (i > r) return
 
       if (i < ti) {
-        request(abort, x)  
+        request(abort, x)
       } else if (i >= ti) {
         if (ts) {
-          request(abort, x)  
+          request(abort, x)
         } else {
           while (i++ <= r) {
-            setImmediate(function () { request(abort, function () {}) })
+            request(abort, function () {})
           }
         }
       }
@@ -86,8 +96,10 @@ module.exports = function (r, ti, ta, ea, ts) {
       if (i > r) return
 
       while (i++ <= r) {
-        setImmediate(function () { request(abort) })
+        request(abort)
       }
     }
+
+    ask(1, terminate)
   }
 }
