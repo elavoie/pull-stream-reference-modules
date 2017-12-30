@@ -1,4 +1,4 @@
-function checkArgs (n, ue, sync) {
+function checkArgs (n, done, sync) {
   if (typeof n !== 'number') {
     throw new Error("Invalid argument: 'n' should be a number")
   }
@@ -7,16 +7,8 @@ function checkArgs (n, ue, sync) {
     throw new Error("Invalid argument: 'n' should be greater or equal to zero")
   }
 
-  if (typeof ue === 'undefined') {
-    ue = Infinity
-  }
-
-  if (typeof ue !== 'number') {
-    throw new Error("Invalid argument: 'ue' should be a number")
-  }
-
-  if (ue < 1) {
-    throw new Error("Invalid argument: 'ue' should be greater or equal to one")
+  if (done !== true && !(done instanceof Error)) {
+    throw new Error("Invalid argument: 'done' should be 'true' or an Error")
   }
 
   if (typeof sync !== 'boolean') {
@@ -24,8 +16,20 @@ function checkArgs (n, ue, sync) {
   }
 }
 
-module.exports = function (n, ue, sync) {
-  checkArgs(n, ue, sync)
+module.exports = function (n, done, sync) {
+  if (arguments.length < 1) {
+    n = Infinity
+  }
+
+  if (arguments.length < 2) {
+    done = true
+  }
+
+  if (arguments.length < 3) {
+    sync = true
+  }
+
+  checkArgs(n, done, sync)
   var i = 1
 
   function answer (x, args) {
@@ -49,18 +53,14 @@ module.exports = function (n, ue, sync) {
       }
     }
 
-    if (!abort && i !== ue && i <= n) {
+    if (!abort && i <= n) {
       return answer(x, [false, i++])
-    } else if (!abort && i !== ue && i === n + 1) {
+    } else if (!abort && i === n + 1) {
+      return answer(x, [done])
+    } else if (abort) {
       return answer(x, [true])
-    } else if (abort === true && i !== ue) {
-      return answer(x, [true])
-    } else if (abort && i !== ue) {
-      return answer(x, [true])
-    } else if (i === ue) {
-      return answer(x, [new Error("Generated error at index '" + ue + "'")])
-    } else if (!abort && i !== ue && i > n + 1) {
-      return answer(x, [new Error("Requesting values after termination at index '" + i + "'")])
+    } else if (!abort && i > n + 1) {
+      throw new Error('Invalid ask request after termination')
     } else {
       throw new Error('Unhandled parameter combination in reference source')
     }

@@ -1,62 +1,68 @@
-function checkArgs (r, ti, ta, ea, ts, tc) {
+function checkArgs (r, index, abort, answer, sync, cont) {
   if (typeof r !== 'number') {
-    throw new Error("Invalid parameter 'r' of type '" + (typeof r) + "', expected a number instead")
+    throw new Error("Invalid argument 'r' of type '" + (typeof r) + "': should be a number")
   }
 
   if (r < 1) {
-    throw new Error("Invalid parameter 'r' of value '" + r + "', expected a number >= 1")
+    throw new Error("Invalid argument 'r' of value '" + r + "': should be a number >= 1")
   }
 
-  if (typeof ti !== 'number') {
-    throw new Error("Invalid parameter 'ti' of type '" + (typeof ti) + "', expected a number instead")
+  if (typeof index !== 'number') {
+    throw new Error("Invalid argument 'index' of type '" + (typeof index) + "': should be a number")
   }
 
-  if (ti < 1 || ti > r) {
-    throw new Error("Invalid parameter 'ti' of value '" + ti + "', expected 1 <= ti <= r")
+  if (index < 1 || index > r) {
+    throw new Error("Invalid argument 'index' of value '" + index + "': should be 1 <= index <= r")
   }
 
-  if (typeof ta !== 'boolean') {
-    throw new Error("Invalid parameter 'ta' of type '" + (typeof ta) + "', expected a boolean value instead")
+  if (abort !== true && !(abort instanceof Error)) {
+    throw new Error("Invalid argument 'abort' of type '" + (typeof abort) + "': should be 'true' or an Error")
   }
 
-  if (typeof ea !== 'boolean') {
-    throw new Error("Invalid parameter 'ea' of type '" + (typeof ea) + "', expected a boolean value instead")
+  if (typeof answer !== 'boolean') {
+    throw new Error("Invalid argument 'answer' of type '" + (typeof answer) + "': should be a boolean value")
   }
 
-  if (typeof ts !== 'boolean') {
-    throw new Error("Invalid parameter 'ts' of type '" + (typeof ts) + "', expected a boolean value instead")
+  if (typeof sync !== 'boolean') {
+    throw new Error("Invalid argument 'sync' of type '" + (typeof sync) + "': should be a boolean value")
   }
 
-  if (typeof ts !== 'boolean') {
-    throw new Error("Invalid parameter 'tc' of type '" + (typeof tc) + "', expected a boolean value instead")
+  if (typeof cont !== 'boolean') {
+    throw new Error("Invalid argument 'cont' of type '" + (typeof cont) + "': should be a boolean value")
   }
 }
 
-module.exports = function (r, ti, ta, ea, ts, tc) {
-  checkArgs(r, ti, ta, ea, ts, tc)
-  var abort = ta ? true : new Error('ReferenceSink: Generated Error')
+module.exports = function (r, index, abort, answer, sync, cont) {
+  if (arguments.length < 1) r = Infinity
+  if (arguments.length < 2) index = r
+  if (arguments.length < 3) abort = true
+  if (arguments.length < 4) answer = true
+  if (arguments.length < 5) sync = true
+  if (arguments.length < 6) cont = false
+
+  checkArgs(r, index, abort, answer, sync, cont)
 
   return function sink (request) {
     function ask (i, terminate) {
       function doRequest () {
-        if (i < ti - 1) {
+        if (i < index - 1) {
           request(false, x)
-        } else if (ts && i < ti) {
+        } else if (sync && i < index) {
           request(false, x)
-        } else if (i === ti - 1) {
+        } else if (i === index - 1) {
           var done = false
           request(false, function (_done) {
             done = _done
           })
-          if (tc || !done) {
+          if (cont || !done) {
             terminate(abort, ++i)
           }
-        } else if (i >= ti) {
+        } else if (i >= index) {
           terminate(abort, i)
         }
       }
       function x (done, v) {
-        if (done && !tc) return
+        if (done && !cont) return
         ++i
         doRequest()
       }
@@ -65,7 +71,7 @@ module.exports = function (r, ti, ta, ea, ts, tc) {
     }
 
     function terminate (abort, i) {
-      if (ea) {
+      if (answer) {
         terminateX(abort, i)
       } else {
         terminateNoX(abort, i)
@@ -79,10 +85,10 @@ module.exports = function (r, ti, ta, ea, ts, tc) {
 
       if (i > r) return
 
-      if (i < ti) {
+      if (i < index) {
         request(abort, x)
-      } else if (i >= ti) {
-        if (ts) {
+      } else if (i >= index) {
+        if (sync) {
           request(abort, x)
         } else {
           while (i++ <= r) {
