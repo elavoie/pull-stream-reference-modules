@@ -2,7 +2,7 @@ var tape = require('tape')
 var pull = require('pull-stream')
 var reference = require('../')
 var reifier = require('pull-stream-protocol-reifier')
-var log = require('debug')('pull-stream-reference-modules')
+var log = require('debug')('pull-stream-reference-modules-tests')
 
 function monitor (t, expected, uoPort, diPort, end) {
   if (arguments.length < 5) end = true
@@ -15,8 +15,13 @@ function monitor (t, expected, uoPort, diPort, end) {
       function (e) {
         log(e)
         t.deepEqual(e, expected[i++])
-        if (end && i === expected.length) t.end()
-        else if (i > expected.length) t.fail('Received more events than expected')
+        if (end && i === expected.length) {
+          if (typeof end === 'boolean') {
+            t.end()
+          } else if (typeof end === 'function') {
+            end()
+          }
+        } else if (i > expected.length) t.fail('Received more events than expected')
       },
       function (err) {
         if (err) t.fail(err)
@@ -599,5 +604,205 @@ tape('source(1, true, true) through(1, true, true) sink(1, 1, true, false)', fun
       {'port': 'DI', 'type': 'request', 'request': 'abort', 'i': 1, 'cb': false}
     ], 'TO', 'DI', true),
     reference.sink(1, 1, true, false)
+  )
+})
+
+tape('source(0,true,true) sink(2,2,true,true,true,true,function () {})', function (t) {
+  pull(
+    reference.source(0, true, true),
+    monitor(t, [
+      {'port': 'DI', 'type': 'request', 'request': 'ask', 'i': 1, 'cb': true},
+      {'port': 'UO', 'type': 'answer', 'answer': 'done', 'i': 1},
+      {'port': 'DI', 'type': 'request', 'request': 'abort', 'i': 2, 'cb': true},
+      {'port': 'UO', 'type': 'answer', 'answer': 'done', 'i': 2}
+    ], 'UO', 'DI', false),
+    reference.sink(2, 2, true, true, true, true, function () { setImmediate(function () { t.end() }) })
+  )
+})
+
+tape('source(0,true,true) sink(2,2,true,true,true,false,function () {})', function (t) {
+  pull(
+    reference.source(0, true, true),
+    monitor(t, [
+      {'port': 'DI', 'type': 'request', 'request': 'ask', 'i': 1, 'cb': true},
+      {'port': 'UO', 'type': 'answer', 'answer': 'done', 'i': 1}
+    ], 'UO', 'DI', false),
+    reference.sink(2, 2, true, true, true, false, function () { setImmediate(function () { t.end() }) })
+  )
+})
+
+tape('source(0,true,true) sink(2,2,true,true,false,true,function () {})', function (t) {
+  pull(
+    reference.source(0, true, true),
+    monitor(t, [
+      {'port': 'DI', 'type': 'request', 'request': 'ask', 'i': 1, 'cb': true},
+      {'port': 'UO', 'type': 'answer', 'answer': 'done', 'i': 1},
+      {'port': 'DI', 'type': 'request', 'request': 'abort', 'i': 2, 'cb': true},
+      {'port': 'UO', 'type': 'answer', 'answer': 'done', 'i': 2}
+    ], 'UO', 'DI', false),
+    reference.sink(2, 2, true, true, false, true, function () { setImmediate(function () { t.end() }) })
+  )
+})
+
+tape('source(0,true,true) sink(2,2,true,true,false,false,function () {})', function (t) {
+  pull(
+    reference.source(0, true, true),
+    monitor(t, [
+      {'port': 'DI', 'type': 'request', 'request': 'ask', 'i': 1, 'cb': true},
+      {'port': 'UO', 'type': 'answer', 'answer': 'done', 'i': 1}
+    ], 'UO', 'DI', false),
+    reference.sink(2, 2, true, true, false, false, function () { setImmediate(function () { t.end() }) })
+  )
+})
+
+tape('source(0,true,true) sink(2,2,true,false,true,true,function () {})', function (t) {
+  pull(
+    reference.source(0, true, true),
+    monitor(t, [
+      {'port': 'DI', 'type': 'request', 'request': 'ask', 'i': 1, 'cb': true},
+      {'port': 'UO', 'type': 'answer', 'answer': 'done', 'i': 1},
+      {'port': 'DI', 'type': 'request', 'request': 'abort', 'i': 2, 'cb': false}
+    ], 'UO', 'DI', false),
+    reference.sink(2, 2, true, false, true, true, function () { setImmediate(function () { t.end() }) })
+  )
+})
+
+tape('source(0,true,true) sink(2,2,true,false,true,false,function () {})', function (t) {
+  pull(
+    reference.source(0, true, true),
+    monitor(t, [
+      {'port': 'DI', 'type': 'request', 'request': 'ask', 'i': 1, 'cb': true},
+      {'port': 'UO', 'type': 'answer', 'answer': 'done', 'i': 1}
+    ], 'UO', 'DI', false),
+    reference.sink(2, 2, true, false, true, false, function () { setImmediate(function () { t.end() }) })
+  )
+})
+
+tape('source(0,true,true) sink(2,2,true,false,false,true,function () {})', function (t) {
+  pull(
+    reference.source(0, true, true),
+    monitor(t, [
+      {'port': 'DI', 'type': 'request', 'request': 'ask', 'i': 1, 'cb': true},
+      {'port': 'UO', 'type': 'answer', 'answer': 'done', 'i': 1},
+      {'port': 'DI', 'type': 'request', 'request': 'abort', 'i': 2, 'cb': false}
+    ], 'UO', 'DI', false),
+    reference.sink(2, 2, true, false, false, true, function () { setImmediate(function () { t.end() }) })
+  )
+})
+
+tape('source(0,true,true) sink(2,2,true,false,false,false,function () {})', function (t) {
+  pull(
+    reference.source(0, true, true),
+    monitor(t, [
+      {'port': 'DI', 'type': 'request', 'request': 'ask', 'i': 1, 'cb': true},
+      {'port': 'UO', 'type': 'answer', 'answer': 'done', 'i': 1}
+    ], 'UO', 'DI', false),
+    reference.sink(2, 2, true, false, false, false, function () { setImmediate(function () { t.end() }) })
+  )
+})
+
+tape('source(0,true,false) sink(2,2,true,true,true,true,function () {})', function (t) {
+  pull(
+    reference.source(0, true, false),
+    monitor(t, [
+      {'port': 'DI', 'type': 'request', 'request': 'ask', 'i': 1, 'cb': true},
+      {'port': 'UO', 'type': 'answer', 'answer': 'done', 'i': 1},
+      {'port': 'DI', 'type': 'request', 'request': 'abort', 'i': 2, 'cb': true},
+      {'port': 'UO', 'type': 'answer', 'answer': 'done', 'i': 2}
+    ], 'UO', 'DI', false),
+    reference.sink(2, 2, true, true, true, true, function () { setImmediate(function () { t.end() }) })
+  )
+})
+
+tape('source(0,true,false) sink(2,2,true,true,true,false,function () {})', function (t) {
+  pull(
+    reference.source(0, true, false),
+    monitor(t, [
+      {'port': 'DI', 'type': 'request', 'request': 'ask', 'i': 1, 'cb': true},
+      {'port': 'UO', 'type': 'answer', 'answer': 'done', 'i': 1}
+    ], 'UO', 'DI', false),
+    reference.sink(2, 2, true, true, true, false, function () { setImmediate(function () { t.end() }) })
+  )
+})
+
+tape('source(0,true,false) sink(2,2,true,true,false,true,function () {})', function (t) {
+  pull(
+    reference.source(0, true, false),
+    monitor(t, [
+      {'port': 'DI', 'type': 'request', 'request': 'ask', 'i': 1, 'cb': true},
+      {'port': 'DI', 'type': 'request', 'request': 'abort', 'i': 2, 'cb': true},
+      {'port': 'UO', 'type': 'answer', 'answer': 'done', 'i': 1},
+      {'port': 'UO', 'type': 'answer', 'answer': 'done', 'i': 2}
+    ], 'UO', 'DI', false),
+    reference.sink(2, 2, true, true, false, true, function () { setImmediate(function () { t.end() }) })
+  )
+})
+
+tape('source(0,true,false) sink(2,2,true,true,false,false,function () {})', function (t) {
+  pull(
+    reference.source(0, true, false),
+    monitor(t, [
+      {'port': 'DI', 'type': 'request', 'request': 'ask', 'i': 1, 'cb': true},
+      {'port': 'DI', 'type': 'request', 'request': 'abort', 'i': 2, 'cb': true},
+      {'port': 'UO', 'type': 'answer', 'answer': 'done', 'i': 1},
+      {'port': 'UO', 'type': 'answer', 'answer': 'done', 'i': 2}
+    ], 'UO', 'DI', false),
+    reference.sink(2, 2, true, true, false, false, function () { setImmediate(function () { t.end() }) })
+  )
+})
+
+tape('source(0,true,false) sink(2,2,true,false,true,true,function () {})', function (t) {
+  pull(
+    reference.source(0, true, false),
+    monitor(t, [
+      {'port': 'DI', 'type': 'request', 'request': 'ask', 'i': 1, 'cb': true},
+      {'port': 'UO', 'type': 'answer', 'answer': 'done', 'i': 1},
+      {'port': 'DI', 'type': 'request', 'request': 'abort', 'i': 2, 'cb': false}
+    ], 'UO', 'DI', false),
+    reference.sink(2, 2, true, false, true, true, function () { setImmediate(function () { t.end() }) })
+  )
+})
+
+tape('source(0,true,false) sink(2,2,true,false,true,false,function () {})', function (t) {
+  var checked = false
+  var terminated = false
+  function end () { if (checked && terminated) t.end() }
+  pull(
+    reference.source(0, true, false),
+    monitor(t, [
+      {'port': 'DI', 'type': 'request', 'request': 'ask', 'i': 1, 'cb': true},
+      {'port': 'UO', 'type': 'answer', 'answer': 'done', 'i': 1}
+    ], 'UO', 'DI', function () { log('checked'); checked = true; end() }),
+    reference.sink(2, 2, true, false, true, false, function () { log('terminated'); terminated = true; end() })
+  )
+})
+
+tape('source(0,true,false) sink(2,2,true,false,false,true,function () {})', function (t) {
+  var checked = false
+  var terminated = false
+  function end () { if (checked && terminated) t.end() }
+  pull(
+    reference.source(0, true, false),
+    monitor(t, [
+      {'port': 'DI', 'type': 'request', 'request': 'ask', 'i': 1, 'cb': true},
+      {'port': 'DI', 'type': 'request', 'request': 'abort', 'i': 2, 'cb': false},
+      {'port': 'UO', 'type': 'answer', 'answer': 'done', 'i': 1}
+    ], 'UO', 'DI', function () { log('checked'); checked = true; end() }),
+    reference.sink(2, 2, true, false, false, true, function () { log('terminated'); terminated = true; end() })
+  )
+})
+
+tape('source(0,true,false) sink(2,2,true,false,false,false,function () {})', function (t) {
+  var checked = false
+  var terminated = false
+  function end () { if (checked && terminated) t.end() }
+  pull(
+    reference.source(0, true, false),
+    monitor(t, [
+      {'port': 'DI', 'type': 'request', 'request': 'ask', 'i': 1, 'cb': true},
+      {'port': 'DI', 'type': 'request', 'request': 'abort', 'i': 2, 'cb': false},
+      {'port': 'UO', 'type': 'answer', 'answer': 'done', 'i': 1}
+    ], 'UO', 'DI', function () { log('checked'); checked = true; end() }),
+    reference.sink(2, 2, true, false, false, false, function () { log('terminated'); terminated = true; end() })
   )
 })

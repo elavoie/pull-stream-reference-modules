@@ -1,6 +1,6 @@
 {
   "name": "pull-stream-reference-modules",
-  "version": "1.0.1",
+  "version": "1.1.0",
   "description": "Reference modules for checking the correctness of other modules.",
   "main": "src/index.js",
   "directories": {
