@@ -31,12 +31,19 @@ module.exports = function (n, done, sync) {
 
   checkArgs(n, done, sync)
   var i = 1
+  var ended = false
 
   function answer (x, args) {
     if (sync) {
       x.apply(this, args)
     } else {
-      setImmediate(function () { x.apply(this, args) })
+      setImmediate(function () {
+        if (ended) {
+          x.call(this, ended)
+        } else {
+          x.apply(this, args)
+        }
+      })
     }
   }
 
@@ -53,11 +60,14 @@ module.exports = function (n, done, sync) {
       }
     }
 
-    if (!abort && i <= n) {
+    if (ended) {
+      return answer(x, [ended])
+    } else if (!abort && i <= n) {
       return answer(x, [false, i++])
     } else if (!abort && i === n + 1) {
       return answer(x, [done])
     } else if (abort) {
+      ended = abort
       return answer(x, [true])
     } else if (!abort && i > n + 1) {
       throw new Error('Invalid ask request after termination')
